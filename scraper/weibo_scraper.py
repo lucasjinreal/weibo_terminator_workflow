@@ -255,7 +255,7 @@ class WeiBoScraper(object):
 
             start_page = 1
             if os.path.exists(self.weibo_content_save_file):
-                obj = pickle.load(self.weibo_content_save_file)
+                obj = pickle.load(open(self.weibo_content_save_file, 'rb'))
                 self.weibo_content = obj[self.scrap_id]['weibo_content']
                 start_page = obj[self.scrap_id]['last_scrap_page']
 
