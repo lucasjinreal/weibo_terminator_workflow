@@ -113,17 +113,16 @@ class WeiBoScraper(object):
             print('scrap id {} already scraped, directly pass it.'.format(self.scrap_id))
         else:
             try:
-                self._get_star_pub_ids()
-                # self._get_html()
-                # self._get_user_name()
-                # self._get_user_info()
-                #
-                # self._get_fans_ids()
-                # self._get_weibo_content()
-                # self._get_weibo_content_and_comment()
-                # print('weibo scrap done!')
-                # self.mark_as_scraped(self.scrap_id)
-                # return True
+                self._get_html()
+                self._get_user_name()
+                self._get_user_info()
+
+                self._get_fans_ids()
+                self._get_weibo_content()
+                self._get_weibo_content_and_comment()
+                print('weibo scrap done!')
+                self.mark_as_scraped(self.scrap_id)
+                return True
             except Exception as e:
                 logging.error(e)
                 print('some error above not catch, return to dispatch center, resign for new account..')
@@ -172,19 +171,6 @@ class WeiBoScraper(object):
         self.followers = int(guid[0])
         print('current user all weibo num {}, following {}, followers {}'.format(self.weibo_num, self.following,
                                                                                  self.followers))
-    def _get_star_pub_ids(self):
-        print('\n' + '-' * 30)
-        print('getting star pub...')
-        ids = []
-        for i in range(1, 11):
-            url = 'https://weibo.cn/pub/top?cat=star&page={}'.format(i)
-            html_fans = requests.get(url, cookies=self.cookie, headers=self.headers).content
-            selector = etree.HTML(html_fans)
-            fans_ids_content = selector.xpath("//div[@class='c']/table//a[@class='pl']/@href")
-            ids_child = [i.split('/')[-1] for i in fans_ids_content]
-            for d in ids_child:
-                ids.append(d)
-        print(ids)
 
     def _get_fans_ids(self):
         """
