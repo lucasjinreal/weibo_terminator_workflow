@@ -1,6 +1,6 @@
-# WeibO Terminator Work Flow
+# Weibo Terminator Work Flow
 
-![PicName](http://ofwzcunzi.bkt.clouddn.com/ScviThBq3lSa8qDk.png)
+![PicName](http://ofwzcunzi.bkt.clouddn.com/6SVLe7p9PKjN5u4q.png)
 
 > 这个项目是之前项目的重启版本，之前的项目地址[这里](https://github.com/jinfagang/weibo_terminater.git)，那个项目依旧会保持更新，这是weibo terminator的工作版本，这个版本对上一个版本做了一些优化，这里的最终目标是一起爬取语料，包括情感分析、对话语料、舆论风控、大数据分析等应用。
 
