@@ -1,4 +1,4 @@
-# WeiBO Terminator Work Flow
+# WeibO Terminator Work Flow
 
 ![PicName](http://ofwzcunzi.bkt.clouddn.com/ScviThBq3lSa8qDk.png)
 
@@ -23,7 +23,7 @@
 
 （当然实际上我们不能获得所有粉丝，不过这些也足够了。）
 
-![PicName](http://ofwzcunzi.bkt.clouddn.com/XnCuE3n0uWRUIQpR.png)
+![PicName](http://ofwzcunzi.bkt.clouddn.com/lqcx6MLSdS8whJVt.png)
 
 # Work Flow
 
