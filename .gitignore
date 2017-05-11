@@ -3,3 +3,4 @@ ghostdriver.log
 __pycache__/
 save_to_distribute.py
 test.py
+save_distribute.py

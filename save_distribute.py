@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# file: save_to_distribute.py
+# file: save_distribute.py
 # author: JinTian
 # time: 11/05/2017 8:47 AM
 # Copyright 2017 JinTian. All Rights Reserved.
