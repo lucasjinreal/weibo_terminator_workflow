@@ -352,10 +352,33 @@ class WeiBoScraper(object):
                 print('[CHEER] weibo content saved into {}, next time will start from {} page'.format(
                     self.weibo_content_save_file, page))
                 del self.weibo_content
+            print('\n' * 2)
+            print('=' * 20)
+            print('all weibo {}, all like {}, all comments {}'.format(
+                len(self.weibo_content), np.sum(self.num_zan), np.sum(self.num_comment)))
+            print('try saving weibo content for now...')
+            dump_obj = dict()
+            if os.path.exists(self.weibo_content_save_file):
+                with open(self.weibo_content_save_file, 'rb') as f:
+                    dump_obj = pickle.load(f)
+                dump_obj[self.scrap_id] = {
+                    'weibo_content': self.weibo_content,
+                    'last_scrap_page': page
+                }
+                with open(self.weibo_content_save_file, 'wb') as f:
+                    pickle.dump(dump_obj, f)
 
+            dump_obj[self.scrap_id] = {
+                'weibo_content': self.weibo_content,
+                'last_scrap_page': page
+            }
+            with open(self.weibo_content_save_file, 'wb') as f:
+                pickle.dump(dump_obj, f)
+            print('[CHEER] weibo content saved into {}, finished this part successfully.'.format(
+                self.weibo_content_save_file, page))
+            del self.weibo_content
             if self.filter == 0:
                 print('共' + str(self.weibo_scraped) + '条微博')
-
             else:
                 print('共' + str(self.weibo_num) + '条微博，其中' + str(self.weibo_scraped) + '条为原创微博')
         except IndexError as e:
