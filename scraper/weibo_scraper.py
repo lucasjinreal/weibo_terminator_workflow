@@ -384,8 +384,9 @@ class WeiBoScraper(object):
         start_scrap_index = 0
         content_and_comment = []
         if os.path.exists(self.weibo_content_and_comment_save_file):
-            obj = pickle.load(self.weibo_content_and_comment_save_file)
-            obj = obj[self.scrap_id]
+            with open(self.weibo_content_and_comment_save_file, 'rb') as f:
+                obj = pickle.load(self.weibo_content_and_comment_save_file)
+                obj = obj[self.scrap_id]
             weibo_detail_urls = obj['weibo_detail_urls']
             start_scrap_index = obj['last_scrap_index']
             content_and_comment = obj['content_and_comment']
