@@ -1,3 +1,5 @@
-.idea/*
+ghostdriver.log
+.idea/
 __pycache__/
-./utils/chromedriver
+save_to_distribute.py
+test.py

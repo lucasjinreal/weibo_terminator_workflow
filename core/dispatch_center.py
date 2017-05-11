@@ -43,7 +43,7 @@ class Dispatcher(object):
         elif self.mode == 'multi':
             self.id_file_path = id_file_path
         else:
-            raise 'mode option only support single and multi'
+            raise Exception('mode option only support single and multi')
 
     def execute(self):
         if self.mode == 'single':
@@ -51,7 +51,7 @@ class Dispatcher(object):
         elif self.mode == 'multi':
             self._init_multi_mode()
         else:
-            raise 'mode option only support single and multi'
+            raise Exception('mode option only support single and multi')
 
     def _init_accounts_cookies(self):
         """
@@ -99,10 +99,11 @@ class Dispatcher(object):
                 break
             else:
                 if i >= len(self.all_accounts):
-                    print('scrap not finish, account resource run out. update account move on scrap.')
+                    print('scrap not finish, account resource run out. update account, move on scrap.')
                     break
                 else:
                     scraper.switch_account(self.all_accounts[i])
+                    i += 1
                     print('account {} being banned or error weibo is none for current user id, switch to {}..'.format(
                         self.all_accounts[i - 1], self.all_accounts[i]))
 

@@ -16,61 +16,78 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------
+"""
+weibo_terminator_workflow
+
+run main.py will do:
+1. first run will scrap distribute ids, every id finished all task will mark as done.
+2. after all distribute ids were done, will scrap all fans id.
+
+"""
 import argparse
 
 from core.dispatch_center import Dispatcher
-from settings.config import DEFAULT_USER_ID
+from settings.config import *
 from utils.string import is_valid_id
+from core.scrap import scrap
+import sys
+import pickle
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='WeiBo Terminator. Jin Fagang')
+def mission(distribute_uuid=None):
+    """
+    mission for workflow.
+    this method is very simple.
+    for the first run, it will scrap distribute ids. you just get distribute_uuid from wechat
+    `jintianiloveu` who is administrator of this project. get your uuid and paste it into mission param
 
-    help_ = 'set user id. or if_file contains multi ids.'
-    parser.add_argument('-i', '--id', default=DEFAULT_USER_ID, help=help_)
 
-    help_ = 'set weibo filter flag. if filter is 0, then weibo are all original,' \
-            ' if 1, weibo contains repost one. default is 0.'
-    parser.add_argument('-f', '--filter', default='1', help=help_)
+    this will get 2-5 ids from distribute_ids.pkl, every uuid got ids are different.
+    After mission complete scrap, continue scrap fans_ids.pkl which contains many many ids. as possiable as you
+    can to scrap those fans ids.
+    :return:
+    """
+    scrap('3879293449')
+    if os.path.exists(DISTRIBUTE_IDS):
+        print('find distribute ids from {}'.format(DISTRIBUTE_IDS))
+        with open(DISTRIBUTE_IDS, 'rb') as f:
+            distribute_dict = pickle.load(f)
+        if os.path.exists(SCRAPED_MARK):
+            finished_ids = pickle.load(open(SCRAPED_MARK, 'rb'))
+        else:
+            finished_ids = []
+        try:
+            mission_ids = distribute_dict[distribute_uuid]
 
-    help_ = 'debug mode for develop. set 1 on, set 0 off.'
-    parser.add_argument('-d', '--debug', default='1', help=help_)
+            if len([i for i in mission_ids if i in finished_ids]) == len(mission_ids):
+                print('Good Done!!! Mission Complete!!')
+                print('now will continue scrap fans_ids.pkl file.')
 
-    args_ = parser.parse_args()
-    return args_
+                fans_id_file = os.path.join(CORPUS_SAVE_DIR, 'weibo_fans.pkl')
+                if os.path.exists(fans_id_file):
+                    fans_id = pickle.load(open(fans_id_file, 'rb'))
+                    for fd in fans_id:
+                        scrap(fd)
+            else:
+                for md in mission_ids:
+                    scrap(md)
+        except Exception as e:
+            print(e)
+            print('distribute uuid invalid.')
+
+
+def scrap_single(sid):
+    """
+    this method scrap single id.
+    For you want scrap you own ids. just send it here
+    :param sid:
+    :return:
+    """
+    scrap(sid)
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    if args.debug == '1':
-        uid = args.id
-        if not '/' or '\\' in uid:
-            print('debug mode not support id file.')
-        else:
-            if not args.filter:
-                filter_flag = args.filter
-            else:
-                filter_flag = 0
-            print('[debug mode] crawling weibo from id {}'.format(uid))
-            dispatcher = Dispatcher(id_file_path=None, mode='single', uid=uid, filter_flag=filter_flag)
-            dispatcher.execute()
-    elif args.debug == '0':
-        uid = args.id
-        if not '/' or '\\' in uid:
-            if not args.filter:
-                filter_flag = args.filter
-            else:
-                filter_flag = 0
-            print('crawling weibo from id {}'.format(uid))
-            dispatcher = Dispatcher(id_file_path=None, mode='single', uid=uid, filter_flag=filter_flag)
-            dispatcher.execute()
-        else:
-            if not args.filter:
-                filter_flag = args.filter
-            else:
-                filter_flag = 0
-            print('crawling weibo from multi id file {}'.format(uid))
-            dispatcher = Dispatcher(id_file_path=uid, mode='multi', uid=None, filter_flag=filter_flag)
-            dispatcher.execute()
+    if len(sys.argv) < 2:
+        print('run as python3 main.py your-uuid, you can get uuid via wechat `jintianiloveu`.')
     else:
-        print('debug mode error, set 1 on, set 0 off.')
+        mission(sys.argv[1])

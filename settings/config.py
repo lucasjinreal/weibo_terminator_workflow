@@ -19,6 +19,7 @@
 """
 all configurations set here, follow the instructions
 """
+import os
 
 # you should not change this properly
 DEFAULT_USER_ID = 'realangelababy'
@@ -32,3 +33,10 @@ PHANTOM_JS_PATH = '/Users/jintian/phantomjs-2.1.1-macosx/bin/phantomjs'
 
 
 COOKIES_SAVE_PATH = 'settings/cookies.pkl'
+
+
+CORPUS_SAVE_DIR = './scraped_corpus/'
+
+DISTRIBUTE_IDS = 'distribute_ids.pkl'
+
+SCRAPED_MARK = './settings/scraped.mark'
