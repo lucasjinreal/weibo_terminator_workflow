@@ -269,7 +269,7 @@ class WeiBoScraper(object):
                     print('---- current solving page {}'.format(page))
 
                     if page % 5 == 0:
-                        print('[ATTEMPTING] rest for 30 seconds to cheat weibo site, avoid being banned.')
+                        print('[REST] rest for 30 seconds to cheat weibo site, avoid being banned.')
                         time.sleep(30)
 
                     if len(content) > 3:
