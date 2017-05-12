@@ -255,6 +255,7 @@ class WeiBoScraper(object):
 
             start_page = 1
             if os.path.exists(self.weibo_content_save_file):
+                print('load previous weibo_content file from {}'.format(self.weibo_content_save_file))
                 obj = pickle.load(open(self.weibo_content_save_file, 'rb'))
                 self.weibo_content = obj[self.scrap_id]['weibo_content']
                 start_page = obj[self.scrap_id]['last_scrap_page']
@@ -406,6 +407,11 @@ class WeiBoScraper(object):
         weibo_detail_urls = self.weibo_detail_urls
         start_scrap_index = 0
         content_and_comment = []
+        if os.path.exists(self.weibo_content_save_file):
+            print('load previous weibo_content file from {}'.format(self.weibo_content_save_file))
+            obj = pickle.load(open(self.weibo_content_save_file, 'rb'))
+            self.weibo_content = obj[self.scrap_id]['weibo_content']
+
         if os.path.exists(self.weibo_content_and_comment_save_file):
             with open(self.weibo_content_and_comment_save_file, 'rb') as f:
                 obj = pickle.load(self.weibo_content_and_comment_save_file)
