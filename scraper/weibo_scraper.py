@@ -324,7 +324,8 @@ class WeiBoScraper(object):
                 with open(self.weibo_content_save_file, 'wb') as f:
                     pickle.dump(dump_obj, f)
                 print('[CHEER] weibo content saved into {}'.format(self.weibo_content_save_file))
-                del self.weibo_content
+                # maybe should not need to release memory
+                # del self.weibo_content
             except Exception as e:
                 print(e)
                 print('\n' * 2)
@@ -352,7 +353,8 @@ class WeiBoScraper(object):
                     pickle.dump(dump_obj, f)
                 print('[CHEER] weibo content saved into {}, next time will start from {} page'.format(
                     self.weibo_content_save_file, page))
-                del self.weibo_content
+                # del self.weibo_content
+                # should keep self.weibo_content
             print('\n' * 2)
             print('=' * 20)
             print('all weibo {}, all like {}, all comments {}'.format(
@@ -414,7 +416,7 @@ class WeiBoScraper(object):
 
         if os.path.exists(self.weibo_content_and_comment_save_file):
             with open(self.weibo_content_and_comment_save_file, 'rb') as f:
-                obj = pickle.load(self.weibo_content_and_comment_save_file)
+                obj = pickle.load(f)
                 obj = obj[self.scrap_id]
             weibo_detail_urls = obj['weibo_detail_urls']
             start_scrap_index = obj['last_scrap_index']
