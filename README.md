@@ -4,6 +4,23 @@
 
 > 这个项目是之前项目的重启版本，之前的项目地址[这里](https://github.com/jinfagang/weibo_terminater.git)，那个项目依旧会保持更新，这是weibo terminator的工作版本，这个版本对上一个版本做了一些优化，这里的最终目标是一起爬取语料，包括情感分析、对话语料、舆论风控、大数据分析等应用。
 
+# UPDATE 2017-5-15
+
+经过一些小修改和几位contributor的PR，代码发生了一些小变化，基本上都是在修复bug和完善一些逻辑，修改如下：
+
+1. 修复了保存出错的问题，这个大家在第一次push的时候clone的代码要pull一下;
+2. 关于 `WeiboScraper has not attribute weibo_content`的错误，新代码已经修复;
+
+@Fence 提交PR修改了一些内容:
+1. 原先的固定30s休息换成随机时间，具体参数可自己定义
+2. 增加了big_v_ids_file，记录已经保存过粉丝的明星id； 用txt格式，方便contributor手动增删
+3. 两个函数的爬取页面都改成了page+1，避免断点续爬时重复爬取上次已经爬过最后一页
+4. 把原先的“爬取完一个id的所有微博及其评论”改为“爬完一条微博及其所有评论就保存”
+5. （Optional）把保存文件的部分单独为函数，因为分别有2个和3个地方需要保存
+
+大家可以`git pull origin master`， 获取一下新更新的版本，同时也欢迎大家继续问我要uuid，我会定时把名单公布在`contirbutor.txt` 中，我近期在做数据merge的工作，以及数据清洗，分类等工作，merge工作完成之后会把大数据集分发给大家。
+
+ 
 # Improve
 
 对上一版本做了以下改进：
