@@ -68,10 +68,14 @@ class WeiBoScraper(object):
         self.num_forwarding = []
         self.num_comment = []
         self.weibo_detail_urls = []
+        self.rest_time = 20
+        self.rest_min_time = 20  # create random rest time
+        self.rest_max_time = 30
 
         self.weibo_content_save_file = os.path.join(CORPUS_SAVE_DIR, 'weibo_content.pkl')
         self.weibo_content_and_comment_save_file = os.path.join(CORPUS_SAVE_DIR, 'weibo_content_and_comment.pkl')
         self.weibo_fans_save_file = os.path.join(CORPUS_SAVE_DIR, 'weibo_fans.pkl')
+        self.big_v_ids_file = os.path.join(CORPUS_SAVE_DIR, 'big_v_ids.txt')
 
     def _init_cookies(self):
         cookie = {
@@ -184,6 +188,13 @@ class WeiBoScraper(object):
         """
         print('\n' + '-' * 30)
         print('getting fans ids...')
+        if os.path.exists(self.big_v_ids_file):
+            with open(self.big_v_ids_file) as f:
+                big_v_ids = f.read().split('\n')
+                if self.scrap_id in big_v_ids:
+                    print('Fans ids of big_v {} (id {}) have been saved before.'.format(
+                        self.user_name, self.scrap_id))
+                    return
         print(self.followers)
         if self.followers < 200:
             pass
@@ -211,8 +222,8 @@ class WeiBoScraper(object):
                 try:
                     for i in range(page_num):
                         if i % 5 == 0 and i != 0:
-                            print('[REST] rest for cheating....')
-                            time.sleep(30)
+                            print('[REST] rest {}s for cheating....'.format(self.rest_time))
+                            time.sleep(self.rest_time)
                         fans_url_child = 'https://weibo.cn/{}/fans?page={}'.format(self.scrap_id, i)
                         print('requesting fans url: {}'.format(fans_url))
                         html_child = requests.get(fans_url_child, cookies=self.cookie, headers=self.headers).content
@@ -236,6 +247,8 @@ class WeiBoScraper(object):
                 print(dump_fans_list)
                 with open(self.weibo_fans_save_file, 'wb') as f:
                     pickle.dump(dump_fans_list, f)
+                with open(self.big_v_ids_file, 'a') as f:
+                    f.write(self.scrap_id + '\n')
                 print('successfully saved fans id file into {}'.format(self.weibo_fans_save_file))
 
             except Exception as e:
@@ -253,25 +266,29 @@ class WeiBoScraper(object):
             pattern = r"\d+\.?\d*"
             print('all weibo page {}'.format(page_num))
 
-            start_page = 1
+            start_page = 0
             if os.path.exists(self.weibo_content_save_file):
                 print('load previous weibo_content file from {}'.format(self.weibo_content_save_file))
                 obj = pickle.load(open(self.weibo_content_save_file, 'rb'))
-                self.weibo_content = obj[self.scrap_id]['weibo_content']
-                start_page = obj[self.scrap_id]['last_scrap_page']
+                if self.scrap_id in obj.keys():
+                    self.weibo_content = obj[self.scrap_id]['weibo_content']
+                    start_page = obj[self.scrap_id]['last_scrap_page']
+            if start_page >= page_num:
+                print('\nAll weibo contents of {} have been scrapped before\n'.format(self.user_name))
+                return 
 
             try:
                 # traverse all weibo, and we will got weibo detail urls
-                for page in range(start_page, page_num):
+                for page in range(start_page + 1, page_num + 1):
                     url2 = 'http://weibo.cn/%s?filter=%s&page=%s' % (self.scrap_id, self.filter, page)
                     html2 = requests.get(url2, cookies=self.cookie, headers=self.headers).content
                     selector2 = etree.HTML(html2)
                     content = selector2.xpath("//div[@class='c']")
-                    print('---- current solving page {}'.format(page))
+                    print('\n---- current solving page {} of {}'.format(page, page_num))
 
                     if page % 5 == 0:
-                        print('[REST] rest for 30 seconds to cheat weibo site, avoid being banned.')
-                        time.sleep(30)
+                        print('[REST] rest for %ds to cheat weibo site, avoid being banned.'%self.rest_time)
+                        time.sleep(self.rest_time)
 
                     if len(content) > 3:
                         for i in range(0, len(content) - 2):
@@ -306,24 +323,7 @@ class WeiBoScraper(object):
                 print('all weibo {}, all like {}, all comments {}'.format(
                     len(self.weibo_content), np.sum(self.num_zan), np.sum(self.num_comment)))
                 print('try saving weibo content for now...')
-                dump_obj = dict()
-                if os.path.exists(self.weibo_content_save_file):
-                    with open(self.weibo_content_save_file, 'rb') as f:
-                        dump_obj = pickle.load(f)
-                    dump_obj[self.scrap_id] = {
-                        'weibo_content': self.weibo_content,
-                        'last_scrap_page': page
-                    }
-                    with open(self.weibo_content_save_file, 'wb') as f:
-                        pickle.dump(dump_obj, f)
-
-                dump_obj[self.scrap_id] = {
-                    'weibo_content': self.weibo_content,
-                    'last_scrap_page': page
-                }
-                with open(self.weibo_content_save_file, 'wb') as f:
-                    pickle.dump(dump_obj, f)
-                print('[CHEER] weibo content saved into {}'.format(self.weibo_content_save_file))
+                self._save_content(page)
                 # maybe should not need to release memory
                 # del self.weibo_content
             except Exception as e:
@@ -334,25 +334,7 @@ class WeiBoScraper(object):
                 print('all weibo {}, all like {}, all comments {}'.format(
                     len(self.weibo_content), np.sum(self.num_zan), np.sum(self.num_comment)))
                 print('try saving weibo content for now...')
-                dump_obj = dict()
-                if os.path.exists(self.weibo_content_save_file):
-                    with open(self.weibo_content_save_file, 'rb') as f:
-                        dump_obj = pickle.load(f)
-                    dump_obj[self.scrap_id] = {
-                        'weibo_content': self.weibo_content,
-                        'last_scrap_page': page
-                    }
-                    with open(self.weibo_content_save_file, 'wb') as f:
-                        pickle.dump(dump_obj, f)
-
-                dump_obj[self.scrap_id] = {
-                    'weibo_content': self.weibo_content,
-                    'last_scrap_page': page
-                }
-                with open(self.weibo_content_save_file, 'wb') as f:
-                    pickle.dump(dump_obj, f)
-                print('[CHEER] weibo content saved into {}, next time will start from {} page'.format(
-                    self.weibo_content_save_file, page))
+                self._save_content(page)
                 # del self.weibo_content
                 # should keep self.weibo_content
             print('\n' * 2)
@@ -360,25 +342,7 @@ class WeiBoScraper(object):
             print('all weibo {}, all like {}, all comments {}'.format(
                 len(self.weibo_content), np.sum(self.num_zan), np.sum(self.num_comment)))
             print('try saving weibo content for now...')
-            dump_obj = dict()
-            if os.path.exists(self.weibo_content_save_file):
-                with open(self.weibo_content_save_file, 'rb') as f:
-                    dump_obj = pickle.load(f)
-                dump_obj[self.scrap_id] = {
-                    'weibo_content': self.weibo_content,
-                    'last_scrap_page': page
-                }
-                with open(self.weibo_content_save_file, 'wb') as f:
-                    pickle.dump(dump_obj, f)
-
-            dump_obj[self.scrap_id] = {
-                'weibo_content': self.weibo_content,
-                'last_scrap_page': page
-            }
-            with open(self.weibo_content_save_file, 'wb') as f:
-                pickle.dump(dump_obj, f)
-            print('[CHEER] weibo content saved into {}, finished this part successfully.'.format(
-                self.weibo_content_save_file, page))
+            self._save_content(page)
             del self.weibo_content
             if self.filter == 0:
                 print('共' + str(self.weibo_scraped) + '条微博')
@@ -386,6 +350,30 @@ class WeiBoScraper(object):
                 print('共' + str(self.weibo_num) + '条微博，其中' + str(self.weibo_scraped) + '条为原创微博')
         except IndexError as e:
             print('get weibo info done, current user {} has no weibo yet.'.format(self.scrap_id))
+
+
+    def _save_content(self, page):
+        dump_obj = dict()
+        if os.path.exists(self.weibo_content_save_file):
+            with open(self.weibo_content_save_file, 'rb') as f:
+                dump_obj = pickle.load(f)
+            dump_obj[self.scrap_id] = {
+                'weibo_content': self.weibo_content,
+                'last_scrap_page': page
+            }
+            with open(self.weibo_content_save_file, 'wb') as f:
+                pickle.dump(dump_obj, f)
+
+        dump_obj[self.scrap_id] = {
+            'weibo_content': self.weibo_content,
+            'last_scrap_page': page
+        }
+        with open(self.weibo_content_save_file, 'wb') as f:
+            pickle.dump(dump_obj, f)
+        print('\nUser name: {} \t ID: {} '.format(self.user_name, self.scrap_id)) 
+        print('[CHEER] weibo content saved into {}, finished this part successfully.\n'.format(
+            self.weibo_content_save_file, page))
+
 
     def _get_weibo_content_and_comment(self):
         """
@@ -417,12 +405,13 @@ class WeiBoScraper(object):
         if os.path.exists(self.weibo_content_and_comment_save_file):
             with open(self.weibo_content_and_comment_save_file, 'rb') as f:
                 obj = pickle.load(f)
-                obj = obj[self.scrap_id]
-            weibo_detail_urls = obj['weibo_detail_urls']
-            start_scrap_index = obj['last_scrap_index']
-            content_and_comment = obj['content_and_comment']
+                if self.scrap_id in obj.keys():
+                    obj = obj[self.scrap_id]
+                    weibo_detail_urls = obj['weibo_detail_urls']
+                    start_scrap_index = obj['last_scrap_index']
+                    content_and_comment = obj['content_and_comment']
 
-        for i in range(start_scrap_index, len(weibo_detail_urls)):
+        for i in range(start_scrap_index + 1, len(weibo_detail_urls)):
             url = weibo_detail_urls[i]
             one_content_and_comment = dict()
 
@@ -438,10 +427,11 @@ class WeiBoScraper(object):
             one_content_and_comment['comment'] = []
 
             for page in range(int(all_comment_pages) - 2):
-
+                print('\n---- current solving page {} of {}'.format(page, int(all_comment_pages)-3))
                 if page % 5 == 0:
-                    print('[ATTEMPTING] rest for 30 s to cheat weibo site, avoid being banned.')
-                    time.sleep(30)
+                    self.rest_time = np.random.randint(self.rest_min_time, self.rest_max_time)
+                    print('[ATTEMPTING] rest for %ds to cheat weibo site, avoid being banned.'%self.rest_time)
+                    time.sleep(self.rest_time)
 
                 # we crawl from page 2, cause front pages have some noise
                 detail_comment_url = url + '&page=' + str(page + 2)
@@ -468,33 +458,57 @@ class WeiBoScraper(object):
                         print(full_single_comment)
                         one_content_and_comment['comment'].append(full_single_comment)
                 except etree.XMLSyntaxError as e:
-                    print('-*20')
-                    print('comments for weibo {} finished'.format(self.weibo_content[i]))
-            content_and_comment.append(one_content_and_comment)
+                    no_content_pages += 1
+                    print('\n\nThis page has no contents and is passed: ', e)
+                    print('Total no_content_pages: {}'.format(no_content_pages))
+                    #print('-'*20)
+                    #print('comments for weibo {} finished'.format(one_content_and_comment['content']))
+                except Exception as e:
+                    print('Raise Exception in _get_weibo_content_and_comment, error:', e)
+                    print('\n' * 2)
+                    print('=' * 20)
+                    print('weibo user {} content_and_comment scrap error occured {}.'.format(self.user_name, e))
+                    self._save_content_and_comment(i, one_content_and_comment, weibo_detail_urls)
+                    print("\n\nComments are successfully save:\n User name: {}\n weibo content: {}\n\n".format(
+                        self.user_name, one_content_and_comment['content']))
+            #content_and_comment.append(one_content_and_comment)
+            # save every one_content_and_comment
+            self._save_content_and_comment(i, one_content_and_comment, weibo_detail_urls)
+            print('*'*30)
+            print("\n\nComments are successfully save:\n User name: {}\n weibo content: {}".format(
+                self.user_name, one_content_and_comment['content']))
+
         print('\n'*2)
         print('='*20)
         print('user {}, all weibo content and comment finished.'.format(self.user_name))
-        print('try saving weibo content and comment for now.')
 
+
+    def _save_content_and_comment(self, i, one_content_and_comment, weibo_detail_urls):
         dump_dict = dict()
         if os.path.exists(self.weibo_content_and_comment_save_file):
             with open(self.weibo_content_and_comment_save_file, 'rb') as f:
                 obj = pickle.load(f)
-            dump_dict = obj
+                dump_dict = obj
+                if self.scrap_id in dump_dict.keys():
+                    dump_dict[self.scrap_id]['last_scrap_index'] = i
+                    dump_dict[self.scrap_id]['content_and_comment'].append(one_content_and_comment)
+                else:
+                    dump_dict[self.scrap_id] = {
+                        'weibo_detail_urls': weibo_detail_urls,
+                        'last_scrap_index': i,
+                        'content_and_comment': [one_content_and_comment]
+                    }
+        else:
             dump_dict[self.scrap_id] = {
                 'weibo_detail_urls': weibo_detail_urls,
                 'last_scrap_index': i,
-                'content_and_comment': content_and_comment
+                'content_and_comment': [one_content_and_comment]
             }
         with open(self.weibo_content_and_comment_save_file, 'wb') as f:
-            dump_dict[self.scrap_id] = {
-                'weibo_detail_urls': weibo_detail_urls,
-                'last_scrap_index': i,
-                'content_and_comment': content_and_comment
-            }
+            print('try saving weibo content and comment for now.')
             pickle.dump(dump_dict, f)
-        print('[CHEER] weibo content and comment saved into {} successfully.'.format(
-            self.weibo_content_and_comment_save_file))
+
+
 
     def switch_account(self, new_account):
         assert new_account.isinstance(str), 'account must be string'
