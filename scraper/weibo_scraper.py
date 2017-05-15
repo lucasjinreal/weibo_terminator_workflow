@@ -68,11 +68,9 @@ class WeiBoScraper(object):
         self.num_forwarding = []
         self.num_comment = []
         self.weibo_detail_urls = []
-        self.rest_time = 5
+        self.rest_time = 20
         self.rest_min_time = 20  # create random rest time
         self.rest_max_time = 30
-        self.rest_min_page = 5   # create random number for continuous pages
-        self.rest_max_page = 10
 
         self.weibo_content_save_file = os.path.join(CORPUS_SAVE_DIR, 'weibo_content.pkl')
         self.weibo_content_and_comment_save_file = os.path.join(CORPUS_SAVE_DIR, 'weibo_content_and_comment.pkl')
@@ -249,6 +247,8 @@ class WeiBoScraper(object):
                 print(dump_fans_list)
                 with open(self.weibo_fans_save_file, 'wb') as f:
                     pickle.dump(dump_fans_list, f)
+                with open(self.big_v_ids_file, 'a') as f:
+                    f.write(self.scrap_id + '\n')
                 print('successfully saved fans id file into {}'.format(self.weibo_fans_save_file))
 
             except Exception as e:
