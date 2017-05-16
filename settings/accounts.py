@@ -29,8 +29,5 @@ accounts = [
         "id": 'jintianiloveu',
         "password": '77888',
     },
-    # {
-    #     "id": '4675879',
-    #     "password": '54675486',
-    # },
+
 ]

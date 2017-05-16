@@ -23,30 +23,40 @@ import pickle
 from settings.accounts import accounts
 
 
-def set_accounts_cookies():
+def init_accounts_cookies():
     if os.path.exists(COOKIES_SAVE_PATH):
-        pass
+        with open(COOKIES_SAVE_PATH, 'rb') as f:
+            cookies_dict = pickle.load(f)
+        return list(cookies_dict.keys())
     else:
         for account in accounts:
             print('preparing cookies for account {}'.format(account))
             get_cookie_from_network(account['id'], account['password'])
-        print('all accounts getting cookies finished. starting scrap..')
+        print('checking account validation...')
+        valid_accounts = get_valid_accounts()
+
+        if len(valid_accounts) == len(accounts):
+            print('all accounts checked valid... start scrap')
+            return valid_accounts
+        elif len(valid_accounts) < 1:
+            print('error, not find valid accounts, please check accounts.')
+            exit(0)
+        elif len(valid_accounts) > 1:
+            print('find valid accounts: ', valid_accounts)
+            print('starting scrap..')
+            return valid_accounts
 
 
-def get_account_cookies(account):
-    """
-    get account cookies
-    :return:
-    """
-    try:
-        with open(COOKIES_SAVE_PATH, 'rb') as f:
-            cookies_dict = pickle.load(f)
-        print('cookies dict: ', cookies_dict)
-        return cookies_dict[account]
-    except Exception as e:
-        print(e)
-        print('error, not find cookies file.')
-        return None
+def get_valid_accounts():
+    with open(COOKIES_SAVE_PATH, 'rb') as f:
+        cookies_dict = pickle.load(f)
+    return list(cookies_dict.keys())
+
+
+def get_cookies_by_account(account_id):
+    with open(COOKIES_SAVE_PATH, 'rb') as f:
+        cookies_dict = pickle.load(f)
+    return cookies_dict[account_id]
 
 
 def scrap(scrap_id):
@@ -54,10 +64,18 @@ def scrap(scrap_id):
     scrap a single id
     :return:
     """
-    set_accounts_cookies()
-    account_id = accounts[0]['id']
+    valid_accounts = init_accounts_cookies()
+    print('valid accounts: ', valid_accounts)
 
-    cookies = get_account_cookies(account_id)
+    # TODO currently only using single account, multi accounts using multi thread maybe quicker but seems like a mess
+    # TODO maybe will adding multi thread feature when our code comes steady
+    # so that maybe need to manually change accounts when one account being baned
+    account_id = valid_accounts[0]
+    print('using accounts: ', account_id)
+
+    cookies = get_cookies_by_account(account_id)
+
+    # alternative this scraper can changed into WeiBoScraperM in the future which scrap from http://m.weibo.cn
     scraper = WeiBoScraper(account_id, scrap_id, cookies)
     scraper.crawl()
 
