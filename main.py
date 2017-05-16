@@ -47,7 +47,7 @@ def mission(distribute_uuid=None):
     can to scrap those fans ids.
     :return:
     """
-    scrap('3879293449')
+    #scrap('3879293449')
     if os.path.exists(DISTRIBUTE_IDS):
         print('find distribute ids from {}'.format(DISTRIBUTE_IDS))
         with open(DISTRIBUTE_IDS, 'rb') as f:

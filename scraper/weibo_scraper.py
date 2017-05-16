@@ -404,19 +404,21 @@ class WeiBoScraper(object):
                     start_scrap_index = obj['last_scrap_index']
                     content_and_comment = obj['content_and_comment']
 
+        end_scrap_index = len(weibo_detail_urls)
         try:
-            for i in range(start_scrap_index + 1, len(weibo_detail_urls)):
+            for i in range(start_scrap_index + 1, end_scrap_index):
                 url = weibo_detail_urls[i]
                 one_content_and_comment = dict()
 
-                print('\nsolving weibo detail from {}'.format(url))
+                print('\n\nsolving weibo detail from {}'.format(url))
+                print('No.{} weibo of total {}'.format(i, end_scrap_index))
                 html_detail = requests.get(url, cookies=self.cookie, headers=self.headers).content
                 selector_detail = etree.HTML(html_detail)
                 # if current weibo content has no comment, skip it
                 if not selector_detail.xpath('//*[@id="pagelist"]/form/div/input[1]/@value'):
                     continue
                 all_comment_pages = selector_detail.xpath('//*[@id="pagelist"]/form/div/input[1]/@value')[0]
-                print('\n这是 {} 的微博：'.format(self.user_name))
+                print('这是 {} 的微博：'.format(self.user_name))
                 print('微博内容： {}'.format(self.weibo_content[i]))
                 print('接下来是下面的评论：\n\n')
 
