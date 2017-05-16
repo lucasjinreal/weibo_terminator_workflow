@@ -412,6 +412,9 @@ class WeiBoScraper(object):
                 print('\nsolving weibo detail from {}'.format(url))
                 html_detail = requests.get(url, cookies=self.cookie, headers=self.headers).content
                 selector_detail = etree.HTML(html_detail)
+                # if current weibo content has no comment, skip it
+                if not selector_detail.xpath('//*[@id="pagelist"]/form/div/input[1]/@value'):
+                    continue
                 all_comment_pages = selector_detail.xpath('//*[@id="pagelist"]/form/div/input[1]/@value')[0]
                 print('\n这是 {} 的微博：'.format(self.user_name))
                 print('微博内容： {}'.format(self.weibo_content[i]))
