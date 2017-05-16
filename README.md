@@ -4,6 +4,14 @@
 
 > 这个项目是之前项目的重启版本，之前的项目地址[这里](https://github.com/jinfagang/weibo_terminater.git)，那个项目依旧会保持更新，这是weibo terminator的工作版本，这个版本对上一个版本做了一些优化，这里的最终目标是一起爬取语料，包括情感分析、对话语料、舆论风控、大数据分析等应用。
 
+# UPDATE 2017-5-16
+
+更新：
+* 调整了首次cookies获取逻辑，如果程序没有检测到cookies就会退出，防止后面爬取不到更多的内容而crash；
+* 增加了WeiBoScraperM 类，目前还在构建中，欢迎submit PR 实现，这个类主要实现从另外一个微博域名爬取，也就是手机域名；
+
+大家可以pull一下更新。
+
 # UPDATE 2017-5-15
 
 经过一些小修改和几位contributor的PR，代码发生了一些小变化，基本上都是在修复bug和完善一些逻辑，修改如下：
@@ -20,7 +28,7 @@
 
 大家可以`git pull origin master`， 获取一下新更新的版本，同时也欢迎大家继续问我要uuid，我会定时把名单公布在`contirbutor.txt` 中，我近期在做数据merge的工作，以及数据清洗，分类等工作，merge工作完成之后会把大数据集分发给大家。
 
- 
+
 # Improve
 
 对上一版本做了以下改进：
