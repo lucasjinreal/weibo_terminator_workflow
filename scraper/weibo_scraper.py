@@ -423,7 +423,8 @@ class WeiBoScraper(object):
                 end_idx = int(all_comment_pages) - 2
                 if i == start_scrap_index + 1 and content_and_comment:
                     one_cac = content_and_comment[-1]
-                    if 'last_idx' in one_cac.keys():
+                    # use the following judgement because the previous data don't have 'last_idx'
+                    if 'last_idx' in one_cac.keys():  
                         print('\nTrying to recover from the last comment of last content...\n')
                         if one_cac['last_idx'] + 1 < end_idx:
                             one_content_and_comment['comment'] = one_cac['comment']
