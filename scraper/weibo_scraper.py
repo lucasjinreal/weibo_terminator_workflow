@@ -44,11 +44,6 @@ import logging
 
 class WeiBoScraper(object):
     def __init__(self, using_account, scrap_id, cookies, filter_flag=0):
-        """
-        uuid user id, filter flag indicates weibo type
-        :param uuid:
-        :param filter_flag:
-        """
         self.using_account = using_account
         self.cookies = cookies
 
@@ -347,6 +342,9 @@ class WeiBoScraper(object):
                 print('共' + str(self.weibo_num) + '条微博，其中' + str(self.weibo_scraped) + '条为原创微博')
         except IndexError as e:
             print('get weibo info done, current user {} has no weibo yet.'.format(self.scrap_id))
+        except KeyboardInterrupt:
+            print('manually interrupted... try save wb_content for now...')
+            self._save_content(page)
 
     def _save_content(self, page):
         dump_obj = dict()
@@ -404,73 +402,77 @@ class WeiBoScraper(object):
                     weibo_detail_urls = obj['weibo_detail_urls']
                     start_scrap_index = obj['last_scrap_index']
 
-        for i in range(start_scrap_index + 1, len(weibo_detail_urls)):
-            url = weibo_detail_urls[i]
-            one_content_and_comment = dict()
+        try:
+            for i in range(start_scrap_index + 1, len(weibo_detail_urls)):
+                url = weibo_detail_urls[i]
+                one_content_and_comment = dict()
 
-            print('solving weibo detail from {}'.format(url))
-            html_detail = requests.get(url, cookies=self.cookie, headers=self.headers).content
-            selector_detail = etree.HTML(html_detail)
-            all_comment_pages = selector_detail.xpath('//*[@id="pagelist"]/form/div/input[1]/@value')[0]
-            print('\n这是 {} 的微博：'.format(self.user_name))
-            print('微博内容： {}'.format(self.weibo_content[i]))
-            print('接下来是下面的评论：\n\n')
+                print('solving weibo detail from {}'.format(url))
+                html_detail = requests.get(url, cookies=self.cookie, headers=self.headers).content
+                selector_detail = etree.HTML(html_detail)
+                all_comment_pages = selector_detail.xpath('//*[@id="pagelist"]/form/div/input[1]/@value')[0]
+                print('\n这是 {} 的微博：'.format(self.user_name))
+                print('微博内容： {}'.format(self.weibo_content[i]))
+                print('接下来是下面的评论：\n\n')
 
-            one_content_and_comment['content'] = self.weibo_content[i]
-            one_content_and_comment['comment'] = []
+                one_content_and_comment['content'] = self.weibo_content[i]
+                one_content_and_comment['comment'] = []
 
-            for page in range(int(all_comment_pages) - 2):
-                print('\n---- current solving page {} of {}'.format(page, int(all_comment_pages) - 3))
-                if page % 5 == 0:
-                    self.rest_time = np.random.randint(self.rest_min_time, self.rest_max_time)
-                    print('[ATTEMPTING] rest for %ds to cheat weibo site, avoid being banned.' % self.rest_time)
-                    time.sleep(self.rest_time)
+                for page in range(int(all_comment_pages) - 2):
+                    print('\n---- current solving page {} of {}'.format(page, int(all_comment_pages) - 3))
+                    if page % 5 == 0:
+                        self.rest_time = np.random.randint(self.rest_min_time, self.rest_max_time)
+                        print('[ATTEMPTING] rest for %ds to cheat weibo site, avoid being banned.' % self.rest_time)
+                        time.sleep(self.rest_time)
 
-                # we crawl from page 2, cause front pages have some noise
-                detail_comment_url = url + '&page=' + str(page + 2)
-                no_content_pages = []
-                try:
-                    # from every detail comment url we will got all comment
-                    html_detail_page = requests.get(detail_comment_url, cookies=self.cookie).content
-                    selector_comment = etree.HTML(html_detail_page)
+                    # we crawl from page 2, cause front pages have some noise
+                    detail_comment_url = url + '&page=' + str(page + 2)
+                    no_content_pages = []
+                    try:
+                        # from every detail comment url we will got all comment
+                        html_detail_page = requests.get(detail_comment_url, cookies=self.cookie).content
+                        selector_comment = etree.HTML(html_detail_page)
 
-                    comment_div_element = selector_comment.xpath('//div[starts-with(@id, "C_")]')
+                        comment_div_element = selector_comment.xpath('//div[starts-with(@id, "C_")]')
 
-                    for child in comment_div_element:
-                        single_comment_user_name = child.xpath('a[1]/text()')[0]
-                        if child.xpath('span[1][count(*)=0]'):
-                            single_comment_content = child.xpath('span[1][count(*)=0]/text()')[0]
-                        else:
-                            span_element = child.xpath('span[1]')[0]
-                            at_user_name = span_element.xpath('a/text()')[0]
-                            at_user_name = '$' + at_user_name.split('@')[-1] + '$'
-                            single_comment_content = span_element.xpath('/text()')
-                            single_comment_content.insert(1, at_user_name)
-                            single_comment_content = ' '.join(single_comment_content)
+                        for child in comment_div_element:
+                            single_comment_user_name = child.xpath('a[1]/text()')[0]
+                            if child.xpath('span[1][count(*)=0]'):
+                                single_comment_content = child.xpath('span[1][count(*)=0]/text()')[0]
+                            else:
+                                span_element = child.xpath('span[1]')[0]
+                                at_user_name = span_element.xpath('a/text()')[0]
+                                at_user_name = '$' + at_user_name.split('@')[-1] + '$'
+                                single_comment_content = span_element.xpath('/text()')
+                                single_comment_content.insert(1, at_user_name)
+                                single_comment_content = ' '.join(single_comment_content)
 
-                        full_single_comment = '<' + single_comment_user_name + '>' + ': ' + single_comment_content
-                        print(full_single_comment)
-                        one_content_and_comment['comment'].append(full_single_comment)
-                except etree.XMLSyntaxError as e:
-                    no_content_pages.append(page)
-                    print('\n\nThis page has no contents and is passed: ', e)
-                    print('Total no_content_pages: {}'.format(len(no_content_pages)))
+                            full_single_comment = '<' + single_comment_user_name + '>' + ': ' + single_comment_content
+                            print(full_single_comment)
+                            one_content_and_comment['comment'].append(full_single_comment)
+                    except etree.XMLSyntaxError as e:
+                        no_content_pages.append(page)
+                        print('\n\nThis page has no contents and is passed: ', e)
+                        print('Total no_content_pages: {}'.format(len(no_content_pages)))
 
-                except Exception as e:
-                    print('Raise Exception in _get_weibo_content_and_comment, error:', e)
-                    print('\n' * 2)
-                    print('=' * 20)
-                    print('weibo user {} content_and_comment scrap error occured {}.'.format(self.user_name, e))
-                    self._save_content_and_comment(i, one_content_and_comment, weibo_detail_urls)
-                    print("\n\nComments are successfully save:\n User name: {}\n weibo content: {}\n\n".format(
-                        self.user_name, one_content_and_comment['content']))
-            # save every one_content_and_comment
+                    except Exception as e:
+                        print('Raise Exception in _get_weibo_content_and_comment, error:', e)
+                        print('\n' * 2)
+                        print('=' * 20)
+                        print('weibo user {} content_and_comment scrap error occured {}.'.format(self.user_name, e))
+                        self._save_content_and_comment(i, one_content_and_comment, weibo_detail_urls)
+                        print("\n\nComments are successfully save:\n User name: {}\n weibo content: {}\n\n".format(
+                            self.user_name, one_content_and_comment['content']))
+                # save every one_content_and_comment
+                self._save_content_and_comment(i, one_content_and_comment, weibo_detail_urls)
+                print('weibo scrap done!')
+                self.mark_as_scraped(self.scrap_id)
+                print('*' * 30)
+                print("\n\nComments are successfully save:\n User name: {}\n weibo content: {}".format(
+                    self.user_name, one_content_and_comment['content']))
+        except KeyboardInterrupt:
+            print('manually interrupted.. try save wb_content_and_comment for now...')
             self._save_content_and_comment(i, one_content_and_comment, weibo_detail_urls)
-            print('weibo scrap done!')
-            self.mark_as_scraped(self.scrap_id)
-            print('*' * 30)
-            print("\n\nComments are successfully save:\n User name: {}\n weibo content: {}".format(
-                self.user_name, one_content_and_comment['content']))
 
         print('\n' * 2)
         print('=' * 20)
