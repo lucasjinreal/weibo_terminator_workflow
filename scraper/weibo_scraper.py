@@ -344,7 +344,7 @@ class WeiBoScraper(object):
             print('get weibo info done, current user {} has no weibo yet.'.format(self.scrap_id))
         except KeyboardInterrupt:
             print('manually interrupted... try save wb_content for now...')
-            self._save_content(page)
+            self._save_content(page - 1)
 
     def _save_content(self, page):
         dump_obj = dict()
@@ -377,9 +377,9 @@ class WeiBoScraper(object):
                 'weibo_detail_urls': [....],
                 'last_scrap_index': 5,
                 'content_and_comment': [
-                {'content': '...', 'comment': ['..', '...', '...', '...',]},
-                {'content': '...', 'comment': ['..', '...', '...', '...',]},
-                {'content': '...', 'comment': ['..', '...', '...', '...',]}
+                {'content': '...', 'comment': ['..', '...', '...', '...',], 'last_idx':num0},
+                {'content': '...', 'comment': ['..', '...', '...', '...',], 'last_idx':num1},
+                {'content': '...', 'comment': ['..', '...', '...', '...',], 'last_idx':num2}
                 ]
             }
         }
@@ -389,6 +389,7 @@ class WeiBoScraper(object):
         print('getting content and comment...')
         weibo_detail_urls = self.weibo_detail_urls
         start_scrap_index = 0
+        content_and_comment = []
         if os.path.exists(self.weibo_content_save_file):
             print('load previous weibo_content file from {}'.format(self.weibo_content_save_file))
             obj = pickle.load(open(self.weibo_content_save_file, 'rb'))
@@ -401,24 +402,41 @@ class WeiBoScraper(object):
                     obj = obj[self.scrap_id]
                     weibo_detail_urls = obj['weibo_detail_urls']
                     start_scrap_index = obj['last_scrap_index']
+                    content_and_comment = obj['content_and_comment']
 
+        end_scrap_index = len(weibo_detail_urls)
         try:
-            for i in range(start_scrap_index + 1, len(weibo_detail_urls)):
+            for i in range(start_scrap_index + 1, end_scrap_index):
                 url = weibo_detail_urls[i]
                 one_content_and_comment = dict()
 
-                print('solving weibo detail from {}'.format(url))
+                print('\n\nsolving weibo detail from {}'.format(url))
+                print('No.{} weibo of total {}'.format(i, end_scrap_index))
                 html_detail = requests.get(url, cookies=self.cookie, headers=self.headers).content
                 selector_detail = etree.HTML(html_detail)
+                # if current weibo content has no comment, skip it
+                if not selector_detail.xpath('//*[@id="pagelist"]/form/div/input[1]/@value'):
+                    continue
                 all_comment_pages = selector_detail.xpath('//*[@id="pagelist"]/form/div/input[1]/@value')[0]
-                print('\n这是 {} 的微博：'.format(self.user_name))
+                print('这是 {} 的微博：'.format(self.user_name))
                 print('微博内容： {}'.format(self.weibo_content[i]))
                 print('接下来是下面的评论：\n\n')
 
                 one_content_and_comment['content'] = self.weibo_content[i]
                 one_content_and_comment['comment'] = []
+                start_idx = 0
+                end_idx = int(all_comment_pages) - 2
+                if i == start_scrap_index + 1 and content_and_comment:
+                    one_cac = content_and_comment[-1]
+                    # use the following judgement because the previous data don't have 'last_idx'
+                    if 'last_idx' in one_cac.keys():  
+                        print('\nTrying to recover from the last comment of last content...\n')
+                        if one_cac['last_idx'] + 1 < end_idx:
+                            one_content_and_comment['comment'] = one_cac['comment']
+                            start_idx = one_cac['last_idx'] + 1
+                            print('last_idx: {}\n'.format(one_cac['last_idx']))
 
-                for page in range(int(all_comment_pages) - 2):
+                for page in range(start_idx, end_idx):
                     print('\n---- current solving page {} of {}'.format(page, int(all_comment_pages) - 3))
                     if page % 5 == 0:
                         self.rest_time = np.random.randint(self.rest_min_time, self.rest_max_time)
@@ -450,6 +468,7 @@ class WeiBoScraper(object):
                             full_single_comment = '<' + single_comment_user_name + '>' + ': ' + single_comment_content
                             print(full_single_comment)
                             one_content_and_comment['comment'].append(full_single_comment)
+                            one_content_and_comment['last_idx'] = page
                     except etree.XMLSyntaxError as e:
                         no_content_pages.append(page)
                         print('\n\nThis page has no contents and is passed: ', e)
@@ -472,7 +491,7 @@ class WeiBoScraper(object):
                     self.user_name, one_content_and_comment['content']))
         except KeyboardInterrupt:
             print('manually interrupted.. try save wb_content_and_comment for now...')
-            self._save_content_and_comment(i, one_content_and_comment, weibo_detail_urls)
+            self._save_content_and_comment(i - 1, one_content_and_comment, weibo_detail_urls)
 
         print('\n' * 2)
         print('=' * 20)
