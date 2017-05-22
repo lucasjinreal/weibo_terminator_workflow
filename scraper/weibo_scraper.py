@@ -95,7 +95,7 @@ class WeiBoScraper(object):
         check mark scrapd ids, jump scraped one.
         :return:
         """
-        if os.path.exists(SCRAPED_MARK):
+        if os.path.exists(SCRAPED_MARK) and os.path.getsize(SCRAPED_MARK) > 0:
             with open(SCRAPED_MARK, 'rb') as f:
                 scraped_ids = pickle.load(f)
             if self.scrap_id in scraped_ids:
@@ -192,7 +192,7 @@ class WeiBoScraper(object):
             pass
         else:
             fans_ids = []
-            if os.path.exists(self.weibo_fans_save_file):
+            if os.path.exists(self.weibo_fans_save_file) and os.path.getsize(self.weibo_fans_save_file) > 0:
                 with open(self.weibo_fans_save_file, 'rb') as f:
                     fans_ids = pickle.load(f)
 
@@ -259,7 +259,7 @@ class WeiBoScraper(object):
             print('all weibo page {}'.format(page_num))
 
             start_page = 0
-            if os.path.exists(self.weibo_content_save_file):
+            if os.path.exists(self.weibo_content_save_file) and os.path.getsize(self.weibo_content_save_file) > 0:
                 print('load previous weibo_content file from {}'.format(self.weibo_content_save_file))
                 obj = pickle.load(open(self.weibo_content_save_file, 'rb'))
                 if self.scrap_id in obj.keys():
@@ -348,7 +348,7 @@ class WeiBoScraper(object):
 
     def _save_content(self, page):
         dump_obj = dict()
-        if os.path.exists(self.weibo_content_save_file):
+        if os.path.exists(self.weibo_content_save_file) and os.path.getsize(self.weibo_content_save_file) > 0:
             with open(self.weibo_content_save_file, 'rb') as f:
                 dump_obj = pickle.load(f)
             dump_obj[self.scrap_id] = {
@@ -390,12 +390,12 @@ class WeiBoScraper(object):
         weibo_detail_urls = self.weibo_detail_urls
         start_scrap_index = 0
         content_and_comment = []
-        if os.path.exists(self.weibo_content_save_file):
+        if os.path.exists(self.weibo_content_save_file) and os.path.getsize(self.weibo_content_save_file) > 0:
             print('load previous weibo_content file from {}'.format(self.weibo_content_save_file))
             obj = pickle.load(open(self.weibo_content_save_file, 'rb'))
             self.weibo_content = obj[self.scrap_id]['weibo_content']
 
-        if os.path.exists(self.weibo_content_and_comment_save_file):
+        if os.path.exists(self.weibo_content_and_comment_save_file) and os.path.getsize(self.weibo_content_and_comment_save_file) > 0:
             with open(self.weibo_content_and_comment_save_file, 'rb') as f:
                 obj = pickle.load(f)
                 if self.scrap_id in obj.keys():
@@ -499,7 +499,7 @@ class WeiBoScraper(object):
 
     def _save_content_and_comment(self, i, one_content_and_comment, weibo_detail_urls):
         dump_dict = dict()
-        if os.path.exists(self.weibo_content_and_comment_save_file):
+        if os.path.exists(self.weibo_content_and_comment_save_file) and os.path.getsize(self.weibo_content_and_comment_save_file) > 0:
             with open(self.weibo_content_and_comment_save_file, 'rb') as f:
                 obj = pickle.load(f)
                 dump_dict = obj
@@ -533,7 +533,7 @@ class WeiBoScraper(object):
         :return:
         """
         scraped_ids = []
-        if os.path.exists(SCRAPED_MARK):
+        if os.path.exists(SCRAPED_MARK) and os.path.getsize(SCRAPED_MARK) > 0:
             with open(SCRAPED_MARK, 'rb') as f:
                 scraped_ids = pickle.load(f)
         scraped_ids.append(scrap_id)
